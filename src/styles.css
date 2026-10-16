@@ -164,3 +164,10 @@ html[data-theme="dark"] .rate-card .rate-label-row span,html[data-theme="dark"] 
   .rate-card-bottom .rate-line input{width:68px;max-width:68px;flex-basis:68px;padding:7px 5px}
   .rate-card-bottom .rate-line button{padding:8px 7px;font-size:10px}
 }
+
+
+/* عنوان نرخ در سمت چپ ورودی */
+.rate-card-bottom .rate-line{justify-content:flex-start}
+.rate-card-bottom .rate-compact-label{display:block!important;flex:0 0 auto;margin:0!important;font-size:11px!important;white-space:nowrap;color:#7a8093}
+html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
+@media(max-width:650px){.rate-card-bottom .rate-compact-label{font-size:10px!important}}
