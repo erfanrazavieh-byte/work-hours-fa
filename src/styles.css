@@ -333,3 +333,10 @@ html[data-theme="dark"] .table-wrap tbody tr:hover td{background:#29334a}
   .report-section-head .month-switch strong{min-width:75px;font-size:12px}
   .report-section-head .month-switch button{padding:3px 7px;font-size:18px}
 }
+
+
+/* هم‌تراز کردن دقیق فیلد نرخ و دکمه ذخیره در یک ردیف */
+.report-section-head .rate-card-top .rate-line{display:flex;align-items:center;justify-content:flex-start}
+.report-section-head .rate-card-top .rate-input-wrap{display:flex;align-items:center}
+.report-section-head .rate-card-top .rate-line input{display:block;margin:0;box-sizing:border-box}
+.report-section-head .rate-card-top .rate-line button{display:inline-flex;align-items:center;justify-content:center;margin:0;box-sizing:border-box;line-height:1}
