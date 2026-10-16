@@ -24,9 +24,16 @@ function TimeSelect({ value, onChange, label }) {
 }
 const emptyRow = (workDate = todayJalali()) => ({ id: `new-${crypto.randomUUID()}`, work_date: workDate, start_time: '', end_time: '', notes: '' });
 const durationMinutes = row => {
-  if (!/^\d{2}:\d{2}$/.test(row.start_time || '') || !/^\d{2}:\d{2}$/.test(row.end_time || '')) return 0;
-  const [sh, sm] = row.start_time.split(':').map(Number), [eh, em] = row.end_time.split(':').map(Number);
-  let mins = eh * 60 + em - (sh * 60 + sm);
+  const toMinutes = value => {
+    const match = /^(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(value || '');
+    if (!match) return null;
+    const hour = Number(match[1]), minute = Number(match[2]);
+    if (hour > 23 || minute > 59) return null;
+    return hour * 60 + minute;
+  };
+  const start = toMinutes(row.start_time), end = toMinutes(row.end_time);
+  if (start === null || end === null) return 0;
+  let mins = end - start;
   if (mins < 0) mins += 24 * 60;
   return mins;
 };
