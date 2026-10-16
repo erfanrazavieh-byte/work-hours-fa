@@ -139,3 +139,11 @@ html[data-theme="dark"] .date-select{background:#151a28;color:#e7e9f3;border-col
 .rate-card .rate-label-row small{display:inline;margin:0;font-size:9px;color:#858a9c;font-weight:400}
 html[data-theme="dark"] .rate-card .rate-label-row span,html[data-theme="dark"] .rate-card .rate-label-row small{color:#aab1c5}
 @media(max-width:420px){.rate-card .rate-label-row{gap:4px}.rate-card .rate-label-row span{font-size:11px}.rate-card .rate-label-row small{font-size:9px}}
+
+
+/* نرخ ساعتی کنار دکمه افزودن روز کاری، زیر جدول گزارش */
+.summary-grid{grid-template-columns:1fr 1fr}
+.rate-card-bottom{width:320px;max-width:100%;padding:9px 12px;flex:0 1 320px}
+.table-footer{align-items:center;flex-wrap:wrap;gap:12px}
+.rate-card-bottom form{width:100%;margin:0}
+@media(max-width:650px){.table-footer{align-items:stretch}.rate-card-bottom{width:100%;flex-basis:100%}.table-footer>.primary{align-self:flex-start}}
