@@ -84,6 +84,8 @@ export default function App() {
   const [activePanelId, setActivePanelId] = useState('');
   const [newPanelName, setNewPanelName] = useState('');
   const [panelBusy, setPanelBusy] = useState(false);
+  const [editingPanelName, setEditingPanelName] = useState(false);
+  const [panelNameDraft, setPanelNameDraft] = useState('');
   const [rate, setRate] = useState('');
   const [rateInput, setRateInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -206,6 +208,52 @@ export default function App() {
     setNotice(`پنل «${data.name}» ساخته شد.`);
   }
 
+  function beginRenamePanel() {
+    const current = panels.find(panel => panel.id === activePanelId);
+    if (!current) return;
+    setPanelNameDraft(current.name);
+    setEditingPanelName(true);
+    setNotice('');
+  }
+
+  async function renamePanel(e) {
+    e.preventDefault();
+    const name = panelNameDraft.trim();
+    if (!name) { setNotice('نام پنل نمی‌تواند خالی باشد.'); return; }
+    if (!activePanelId || !session || !supabase) return;
+    setPanelBusy(true); setNotice('');
+    const { data, error } = await supabase.from('work_panels')
+      .update({ name, updated_at: new Date().toISOString() })
+      .eq('id', activePanelId).eq('user_id', session.user.id)
+      .select('id, name').single();
+    setPanelBusy(false);
+    if (error) { setNotice(`تغییر نام پنل انجام نشد: ${error.message}`); return; }
+    setPanels(prev => prev.map(panel => panel.id === data.id ? data : panel));
+    setEditingPanelName(false);
+    setNotice(`نام پنل به «${data.name}» تغییر کرد.`);
+  }
+
+  async function deletePanel() {
+    const current = panels.find(panel => panel.id === activePanelId);
+    if (!current || !session || !supabase) return;
+    if (panels.length <= 1) {
+      setNotice('نمی‌توانید آخرین پنل را حذف کنید؛ ابتدا یک پنل جدید بسازید.');
+      return;
+    }
+    const confirmed = window.confirm(`پنل «${current.name}» و تمام سوابق ساعت کاری و نرخ‌های ذخیره‌شده در آن برای همیشه حذف شوند؟ این کار قابل بازگشت نیست.`);
+    if (!confirmed) return;
+    setPanelBusy(true); setNotice('');
+    const { error } = await supabase.from('work_panels').delete()
+      .eq('id', activePanelId).eq('user_id', session.user.id);
+    setPanelBusy(false);
+    if (error) { setNotice(`حذف پنل انجام نشد: ${error.message}`); return; }
+    const remaining = panels.filter(panel => panel.id !== activePanelId);
+    setPanels(remaining);
+    setActivePanelId(remaining[0].id);
+    setEditingPanelName(false);
+    setNotice(`پنل «${current.name}» و اطلاعات مربوط به آن حذف شد.`);
+  }
+
   async function saveRow(row) {
     if (!session || !supabase) return;
     const isoDate = jalaliToIso(row.work_date);
@@ -260,7 +308,7 @@ export default function App() {
   if (!session) return <main className="auth-page"><form className="panel auth-card" onSubmit={submitAuth}><div className="brand-mark">س</div><h1>ثبت ساعت کاری</h1><p className="muted">سوابق کارکرد و دستمزد ماهانه</p><div className="tabs"><button type="button" className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>ورود</button><button type="button" className={authMode === 'signup' ? 'active' : ''} onClick={() => setAuthMode('signup')}>ثبت‌نام</button></div><label>ایمیل<input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" dir="ltr" /></label><label>رمز عبور<input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="حداقل ۶ کاراکتر" dir="ltr" /></label><button className="primary full" disabled={authBusy}>{authBusy ? 'در حال انجام…' : authMode === 'login' ? 'ورود به حساب' : 'ساخت حساب'}</button>{notice && <p className="notice">{notice}</p>}</form></main>;
 
   return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></header>
-    <section className="panel panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">پنل محاسبات</label><select id="active-panel" value={activePanelId} onChange={e => setActivePanelId(e.target.value)} disabled={!panels.length}><option value="" disabled>انتخاب پنل</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام پنل جدید؛ مثلاً کارفرمای دوم" aria-label="نام پنل جدید" maxLength={80} /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال ساخت…' : '＋ افزودن پنل'}</button></form></section>
+    <section className="panel panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">پنل محاسبات</label><select id="active-panel" value={activePanelId} onChange={e => { setActivePanelId(e.target.value); setEditingPanelName(false); }} disabled={!panels.length || panelBusy}><option value="" disabled>انتخاب پنل</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select><div className="panel-management-actions">{editingPanelName ? <form className="rename-panel-form" onSubmit={renamePanel}><input value={panelNameDraft} onChange={e => setPanelNameDraft(e.target.value)} aria-label="نام جدید پنل" maxLength={80} autoFocus /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال ذخیره…' : 'ذخیره نام'}</button><button type="button" className="subtle" onClick={() => setEditingPanelName(false)} disabled={panelBusy}>لغو</button></form> : <><button type="button" className="subtle" onClick={beginRenamePanel} disabled={!activePanelId || panelBusy}>تغییر نام</button><button type="button" className="delete-panel-btn" onClick={deletePanel} disabled={!activePanelId || panelBusy || panels.length <= 1} title={panels.length <= 1 ? 'آخرین پنل قابل حذف نیست' : 'حذف پنل انتخاب‌شده'}>حذف پنل</button></>}</div></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام پنل جدید؛ مثلاً کارفرمای دوم" aria-label="نام پنل جدید" maxLength={80} /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال انجام…' : '＋ افزودن پنل'}</button></form></section>
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong style={{ fontFamily: 'inherit', fontSize: '1.5rem', fontWeight: 700 }}><span dir="ltr" style={{ fontSize: '1.5rem', fontFamily: 'inherit', fontWeight: 700, display: 'inline-block' }}>{totalHoursLabel}</span> ساعت</strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
       {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><DateSelect value={row.work_date} onChange={value => updateRow(row.id, 'work_date', value)} /></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
