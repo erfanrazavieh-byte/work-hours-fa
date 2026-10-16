@@ -108,3 +108,13 @@ html[data-theme="dark"] .profile-email-row{background:#151a28;border-color:#3037
 html[data-theme="dark"] .profile-email-row span,html[data-theme="dark"] .profile-trigger-text small,html[data-theme="dark"] .profile-avatar-editor small{color:#aab1c5}
 html[data-theme="dark"] .profile-form input:not([type=file]),html[data-theme="dark"] .profile-form textarea{background:#151a28;color:#e7e9f3;border-color:#394158}
 @media(max-width:650px){.topbar{padding-top:54px}.profile-trigger{max-width:calc(100% - 2px);padding:6px 8px;gap:7px}.profile-trigger-avatar{width:34px;height:34px;flex-basis:34px}.profile-trigger-text strong,.profile-trigger-text small{max-width:180px}.profile-drawer{padding:18px}}
+
+
+/* یکسان‌سازی ابعاد فیلدهای انتخاب تاریخ با فیلدهای ساعت */
+.date-picker{display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.date-select{box-sizing:border-box;height:38px;min-height:38px;padding:8px 3px;border:1px solid #e0e3ed;border-radius:8px;background:#fff;color:#20243a;font:inherit;font-size:13px;text-align:center;outline:none}
+.date-day{width:48px}
+.date-month{width:82px}
+.date-year{width:68px}
+.date-select:focus{border-color:#818cf8;box-shadow:0 0 0 2px #4f46e51a}
+html[data-theme="dark"] .date-select{background:#151a28;color:#e7e9f3;border-color:#394158}
