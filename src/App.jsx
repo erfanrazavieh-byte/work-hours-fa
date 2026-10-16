@@ -80,6 +80,10 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [month, setMonth] = useState(() => todayJalali().slice(0, 7) + '-01');
   const [rows, setRows] = useState([]);
+  const [panels, setPanels] = useState([]);
+  const [activePanelId, setActivePanelId] = useState('');
+  const [newPanelName, setNewPanelName] = useState('');
+  const [panelBusy, setPanelBusy] = useState(false);
   const [rate, setRate] = useState('');
   const [rateInput, setRateInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,15 +97,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!session || !supabase) return;
+    if (!session || !supabase || !activePanelId) return;
     let active = true;
     async function load() {
-      setLoading(true); setNotice('');
+      setLoading(true); setNotice(''); setRows([]);
       const { start, end } = jalaliMonthBounds(month);
       const monthStartIso = jalaliToIso(month);
       const [entryResult, monthRateResult, profileResult] = await Promise.all([
-        supabase.from('work_entries').select('*').gte('work_date', start).lt('work_date', end).order('work_date', { ascending: true }),
-        supabase.from('monthly_rates').select('hourly_rate').eq('user_id', session.user.id).eq('month_start', monthStartIso).maybeSingle(),
+        supabase.from('work_entries').select('*').eq('panel_id', activePanelId).gte('work_date', start).lt('work_date', end).order('work_date', { ascending: true }),
+        supabase.from('monthly_rates').select('hourly_rate').eq('panel_id', activePanelId).eq('month_start', monthStartIso).maybeSingle(),
         supabase.from('profiles').select('hourly_rate').eq('id', session.user.id).maybeSingle()
       ]);
       if (!active) return;
@@ -118,13 +122,41 @@ export default function App() {
     }
     load();
     return () => { active = false; };
-  }, [session, month]);
+  }, [session, month, activePanelId]);
 
   // فقط ردیف‌های ذخیره‌شده در مجموع ماهانه و مبلغ قابل پرداخت حساب می‌شوند.
   const totalMinutes = useMemo(() => rows.filter(row => !String(row.id).startsWith('new-')).reduce((sum, row) => sum + durationMinutes(row), 0), [rows]);
   const totalHours = totalMinutes / 60;
   const totalHoursLabel = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
   const totalPay = totalHours * (Number(rate) || 0);
+
+  useEffect(() => {
+    if (!session || !supabase) return;
+    let active = true;
+    async function loadPanels() {
+      const { data, error } = await supabase.from('work_panels').select('id, name').eq('user_id', session.user.id).order('created_at', { ascending: true });
+      if (!active) return;
+      if (error) {
+        setNotice(`خطا در دریافت پنل‌ها: ${error.message}`);
+        return;
+      }
+      const available = data || [];
+      setPanels(available);
+      if (available.length === 0) {
+        setActivePanelId('');
+        setNotice('پنلی پیدا نشد. ابتدا migration چندپنلی را در Supabase اجرا کنید.');
+        return;
+      }
+      const savedId = window.localStorage.getItem(`work-panel-${session.user.id}`);
+      setActivePanelId(previous => available.some(panel => panel.id === previous) ? previous : (available.some(panel => panel.id === savedId) ? savedId : available[0].id));
+    }
+    loadPanels();
+    return () => { active = false; };
+  }, [session]);
+
+  useEffect(() => {
+    if (session && activePanelId) window.localStorage.setItem(`work-panel-${session.user.id}`, activePanelId);
+  }, [session, activePanelId]);
 
   async function submitAuth(e) {
     e.preventDefault(); setAuthBusy(true); setNotice('');
@@ -159,6 +191,21 @@ export default function App() {
     setRows(prev => [...prev, emptyRow(defaultDate)]);
   }
 
+  async function createPanel(e) {
+    e.preventDefault();
+    const name = newPanelName.trim();
+    if (!name) { setNotice('برای پنل جدید یک نام وارد کنید.'); return; }
+    if (!session || !supabase) return;
+    setPanelBusy(true); setNotice('');
+    const { data, error } = await supabase.from('work_panels').insert({ user_id: session.user.id, name }).select('id, name').single();
+    setPanelBusy(false);
+    if (error) { setNotice(`پنل ساخته نشد: ${error.message}`); return; }
+    setPanels(prev => [...prev, data]);
+    setNewPanelName('');
+    setActivePanelId(data.id);
+    setNotice(`پنل «${data.name}» ساخته شد.`);
+  }
+
   async function saveRow(row) {
     if (!session || !supabase) return;
     const isoDate = jalaliToIso(row.work_date);
@@ -176,10 +223,10 @@ export default function App() {
       setNotice('لطفاً ساعت شروع و پایان را از هر دو فهرست ساعت و دقیقه انتخاب کنید.');
       return;
     }
-    const payload = { user_id: session.user.id, work_date: isoDate, start_time: startTime, end_time: endTime, notes: row.notes || '' };
+    const payload = { user_id: session.user.id, panel_id: activePanelId, work_date: isoDate, start_time: startTime, end_time: endTime, notes: row.notes || '' };
     const result = row.id.startsWith('new-')
       ? await supabase.from('work_entries').insert(payload).select().single()
-      : await supabase.from('work_entries').update(payload).eq('id', row.id).select().single();
+      : await supabase.from('work_entries').update(payload).eq('id', row.id).eq('panel_id', activePanelId).select().single();
     if (result.error) setNotice(`ذخیره نشد: ${result.error.message}`);
     else {
       setRows(prev => prev.map(r => r.id === row.id ? { ...result.data, work_date: isoToJalali(result.data.work_date) } : r));
@@ -189,7 +236,7 @@ export default function App() {
 
   async function deleteRow(row) {
     if (row.id.startsWith('new-')) { setRows(prev => prev.filter(r => r.id !== row.id)); return; }
-    const result = await supabase.from('work_entries').delete().eq('id', row.id);
+    const result = await supabase.from('work_entries').delete().eq('id', row.id).eq('panel_id', activePanelId);
     if (result.error) setNotice(`حذف انجام نشد: ${result.error.message}`);
     else { setRows(prev => prev.filter(r => r.id !== row.id)); setNotice('ردیف حذف شد.'); }
   }
@@ -201,8 +248,8 @@ export default function App() {
     const monthStartIso = jalaliToIso(month);
     if (!monthStartIso) { setNotice('ماه انتخاب‌شده معتبر نیست.'); return; }
     const result = await supabase.from('monthly_rates').upsert(
-      { user_id: session.user.id, month_start: monthStartIso, hourly_rate: numeric },
-      { onConflict: 'user_id,month_start' }
+      { user_id: session.user.id, panel_id: activePanelId, month_start: monthStartIso, hourly_rate: numeric },
+      { onConflict: 'panel_id,month_start' }
     );
     if (result.error) setNotice(`نرخ ذخیره نشد: ${result.error.message}`);
     else { setRate(String(numeric)); setNotice(`نرخ ساعتی ${monthTitle(month)} ذخیره شد.`); }
@@ -213,6 +260,7 @@ export default function App() {
   if (!session) return <main className="auth-page"><form className="panel auth-card" onSubmit={submitAuth}><div className="brand-mark">س</div><h1>ثبت ساعت کاری</h1><p className="muted">سوابق کارکرد و دستمزد ماهانه</p><div className="tabs"><button type="button" className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>ورود</button><button type="button" className={authMode === 'signup' ? 'active' : ''} onClick={() => setAuthMode('signup')}>ثبت‌نام</button></div><label>ایمیل<input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" dir="ltr" /></label><label>رمز عبور<input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="حداقل ۶ کاراکتر" dir="ltr" /></label><button className="primary full" disabled={authBusy}>{authBusy ? 'در حال انجام…' : authMode === 'login' ? 'ورود به حساب' : 'ساخت حساب'}</button>{notice && <p className="notice">{notice}</p>}</form></main>;
 
   return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></header>
+    <section className="panel panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">پنل محاسبات</label><select id="active-panel" value={activePanelId} onChange={e => setActivePanelId(e.target.value)} disabled={!panels.length}><option value="" disabled>انتخاب پنل</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام پنل جدید؛ مثلاً کارفرمای دوم" aria-label="نام پنل جدید" maxLength={80} /><button className="primary" disabled={panelBusy || !newPanelName.trim()}>{panelBusy ? 'در حال ساخت…' : '＋ افزودن پنل'}</button></form></section>
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong style={{ fontFamily: 'inherit', fontSize: '1.5rem', fontWeight: 700 }}><span dir="ltr" style={{ fontSize: '1.5rem', fontFamily: 'inherit', fontWeight: 700, display: 'inline-block' }}>{totalHoursLabel}</span> ساعت</strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
       {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><DateSelect value={row.work_date} onChange={value => updateRow(row.id, 'work_date', value)} /></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
