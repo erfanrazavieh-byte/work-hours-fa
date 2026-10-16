@@ -6,12 +6,13 @@
 
 1. در Supabase یک پروژه بسازید.
 2. محتوای `supabase/schema.sql` را در SQL Editor اجرا کنید.
-3. در Authentication → Providers → Email گزینه تأیید ایمیل (Confirm email) را خاموش کنید.
-4. در Project Settings → API، آدرس پروژه و کلید عمومی anon/publishable را بردارید.
-5. متغیرهای محیطی را تنظیم کنید:
+3. برای فعال‌کردن پنل‌های نامحدود، محتوای `supabase/migrations/20261016_multi_work_panels.sql` را هم در SQL Editor اجرا کنید. این مهاجرت اطلاعات قبلی را به «پنل اصلی» منتقل می‌کند.
+4. در Authentication → Providers → Email گزینه تأیید ایمیل (Confirm email) را خاموش کنید.
+5. در Project Settings → API، آدرس پروژه و کلید عمومی anon/publishable را بردارید.
+6. متغیرهای محیطی را تنظیم کنید:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-6. اجرا: `npm install` سپس `npm run dev`.
+7. اجرا: `npm install` سپس `npm run dev`.
 
 ## انتشار در Cloudflare Pages / Vercel / Netlify
 
