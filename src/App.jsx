@@ -10,7 +10,7 @@ function nextJalaliDay(value) {
   return isoToJalali(date.toISOString().slice(0, 10));
 }
 function TimeSelect({ value, onChange, label }) {
-  const [hour = '', minute = ''] = value ? value.split(':') : ['', ''];
+  const [hour = '', minute = ''] = value ? value.split(':').slice(0, 2) : ['', ''];
   return <div className="time-picker" dir="ltr">
     <select className="time-select" value={hour} aria-label={label + ' ساعت'} onChange={e => onChange(e.target.value + ':' + minute)}>
       <option value="">ساعت</option>
@@ -130,12 +130,19 @@ export default function App() {
     const isoDate = jalaliToIso(row.work_date);
     if (!isoDate) { setNotice('تاریخ شمسی معتبر وارد کنید؛ نمونه: ۱۴۰۵-۰۷-۲۴ (با اعداد انگلیسی).'); return; }
     if (!row.start_time || !row.end_time) { setNotice('ساعت شروع و پایان را وارد کنید.'); return; }
-    const validTime = value => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
-    if (!validTime(row.start_time) || !validTime(row.end_time)) {
-      setNotice('ساعت شروع یا پایان معتبر نیست.');
+    const normalizeTime = value => {
+      const match = /^(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(value || '');
+      if (!match) return null;
+      const hour = Number(match[1]), minute = Number(match[2]);
+      return hour <= 23 && minute <= 59 ? `${match[1]}:${match[2]}` : null;
+    };
+    const startTime = normalizeTime(row.start_time);
+    const endTime = normalizeTime(row.end_time);
+    if (!startTime || !endTime) {
+      setNotice('لطفاً ساعت شروع و پایان را از هر دو فهرست ساعت و دقیقه انتخاب کنید.');
       return;
     }
-    const payload = { user_id: session.user.id, work_date: isoDate, start_time: row.start_time, end_time: row.end_time, notes: row.notes || '' };
+    const payload = { user_id: session.user.id, work_date: isoDate, start_time: startTime, end_time: endTime, notes: row.notes || '' };
     const result = row.id.startsWith('new-')
       ? await supabase.from('work_entries').insert(payload).select().single()
       : await supabase.from('work_entries').update(payload).eq('id', row.id).select().single();
