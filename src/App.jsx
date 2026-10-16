@@ -87,6 +87,7 @@ export default function App() {
   const [editingPanelName, setEditingPanelName] = useState(false);
   const [panelNameDraft, setPanelNameDraft] = useState('');
   const [panelDrawerOpen, setPanelDrawerOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [rate, setRate] = useState('');
   const [rateInput, setRateInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -290,6 +291,118 @@ export default function App() {
     else { setRows(prev => prev.filter(r => r.id !== row.id)); setNotice('ردیف حذف شد.'); }
   }
 
+  function getExportReport() {
+    const activePanel = panels.find(panel => panel.id === activePanelId);
+    return {
+      panelName: activePanel?.name || 'پنل محاسبات',
+      monthName: monthTitle(month),
+      totalHours: totalHoursLabel,
+      totalPay: money(totalPay),
+      rows: rows.map(row => ({
+        date: row.work_date || '',
+        start: row.start_time || '—',
+        end: row.end_time || '—',
+        notes: row.notes || '',
+        hours: durationLabel(row)
+      }))
+    };
+  }
+
+  function exportHtmlDocument() {
+    const report = getExportReport();
+    const esc = value => String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    const tableRows = report.rows.map(row => `<tr><td>${esc(row.date)}</td><td>${esc(row.start)}</td><td>${esc(row.end)}</td><td>${esc(row.notes)}</td><td>${esc(row.hours)}</td></tr>`).join('');
+    return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش کارکرد</title><style>body{font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:24px;color:#20243a}h1,h2,p{text-align:right}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #bbb;padding:8px;text-align:right}th{background:#eee}.totals{display:flex;gap:32px;margin-top:18px;font-weight:bold}</style></head><body><h1>گزارش کارکرد</h1><p>پنل: ${esc(report.panelName)} | ماه: ${esc(report.monthName)}</p><div class="totals"><span>مجموع ساعت: ${esc(report.totalHours)} ساعت</span><span>مبلغ قابل پرداخت: ${esc(report.totalPay)}</span></div><table><thead><tr><th>تاریخ</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th></tr></thead><tbody>${tableRows || '<tr><td colspan="5">داده‌ای برای نمایش وجود ندارد.</td></tr>'}</tbody></table></body></html>`;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setExportMenuOpen(false);
+  }
+
+  function exportSpreadsheet() {
+    const html = exportHtmlDocument();
+    downloadBlob(new Blob(['\\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8;' }), `گزارش-کارکرد-${month}.xls`);
+  }
+
+  function exportWord() {
+    const html = exportHtmlDocument();
+    downloadBlob(new Blob(['\\ufeff', html], { type: 'application/msword;charset=utf-8;' }), `گزارش-کارکرد-${month}.doc`);
+  }
+
+  function exportPdf() {
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      setNotice('برای ساخت PDF اجازه بازشدن پنجره جدید را بدهید.');
+      setExportMenuOpen(false);
+      return;
+    }
+    popup.document.open();
+    popup.document.write(exportHtmlDocument().replace('</body>', '<script>window.onload=function(){window.print()}<\\/script></body>'));
+    popup.document.close();
+    setExportMenuOpen(false);
+  }
+
+  function exportImage() {
+    const report = getExportReport();
+    const canvas = document.createElement('canvas');
+    const width = 1400;
+    const rowHeight = 52;
+    const topHeight = 250;
+    canvas.width = width;
+    canvas.height = topHeight + Math.max(report.rows.length, 1) * rowHeight + 80;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { setNotice('ساخت تصویر در این مرورگر پشتیبانی نمی‌شود.'); return; }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.direction = 'rtl';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#20243a';
+    ctx.font = 'bold 34px Tahoma, Arial';
+    ctx.fillText('گزارش کارکرد', width - 50, 55);
+    ctx.font = '24px Tahoma, Arial';
+    ctx.fillText(`پنل: ${report.panelName}  |  ماه: ${report.monthName}`, width - 50, 105);
+    ctx.font = 'bold 24px Tahoma, Arial';
+    ctx.fillText(`مجموع ساعت: ${report.totalHours} ساعت`, width - 50, 155);
+    ctx.fillText(`مبلغ قابل پرداخت: ${report.totalPay}`, width - 50, 195);
+    const columns = [
+      { title: 'تاریخ', x: 1350, w: 180 },
+      { title: 'شروع', x: 1170, w: 190 },
+      { title: 'پایان', x: 980, w: 190 },
+      { title: 'توضیحات', x: 790, w: 480 },
+      { title: 'ساعت روز', x: 310, w: 180 }
+    ];
+    let y = topHeight;
+    ctx.fillStyle = '#eef0f8';
+    ctx.fillRect(40, y, width - 80, rowHeight);
+    ctx.fillStyle = '#20243a';
+    ctx.font = 'bold 21px Tahoma, Arial';
+    columns.forEach(col => ctx.fillText(col.title, col.x, y + 33, col.w));
+    y += rowHeight;
+    const imageRows = report.rows.length ? report.rows : [{ date: '—', start: '—', end: '—', notes: 'داده‌ای برای نمایش وجود ندارد', hours: '—' }];
+    imageRows.forEach((row, index) => {
+      ctx.fillStyle = index % 2 ? '#ffffff' : '#f8f9fc';
+      ctx.fillRect(40, y, width - 80, rowHeight);
+      ctx.strokeStyle = '#e0e3ed';
+      ctx.beginPath(); ctx.moveTo(40, y + rowHeight); ctx.lineTo(width - 40, y + rowHeight); ctx.stroke();
+      ctx.fillStyle = '#303449';
+      ctx.font = '19px Tahoma, Arial';
+      [row.date, row.start, row.end, row.notes, row.hours].forEach((value, i) => ctx.fillText(String(value || '—'), columns[i].x, y + 32, columns[i].w));
+      y += rowHeight;
+    });
+    canvas.toBlob(blob => {
+      if (blob) downloadBlob(blob, `گزارش-کارکرد-${month}.png`);
+      else setNotice('ساخت تصویر ناموفق بود؛ دوباره تلاش کنید.');
+    }, 'image/png');
+  }
+
   async function saveRate(e) {
     e.preventDefault();
     const numeric = Number(rateInput);
@@ -314,5 +427,7 @@ export default function App() {
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
       {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><DateSelect value={row.work_date} onChange={value => updateRow(row.id, 'work_date', value)} /></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
       <div className="table-footer"><button className="primary" onClick={addRow}>＋ افزودن روز کاری</button></div>
-    </section><footer>اطلاعات هر حساب به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
+    </section>
+    <div className="report-export-area" dir="ltr"><div className="report-export-menu-wrap"><button type="button" className="subtle report-export-trigger" onClick={() => setExportMenuOpen(open => !open)} aria-expanded={exportMenuOpen}>⇩ خروجی گرفتن از گزارش</button>{exportMenuOpen && <div className="report-export-menu" dir="rtl"><button type="button" onClick={exportImage}>ذخیره به‌صورت عکس (PNG)</button><button type="button" onClick={exportPdf}>ذخیره به‌صورت PDF</button><button type="button" onClick={exportSpreadsheet}>ذخیره به‌صورت Excel</button><button type="button" onClick={exportWord}>ذخیره به‌صورت Word</button></div>}</div></div>
+    <footer>اطلاعات هر حساب به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
 }
