@@ -97,9 +97,22 @@ export default function App() {
   function updateRow(id, key, value) { setRows(prev => prev.map(row => row.id === id ? { ...row, [key]: value } : row)); }
   function addRow() {
     const today = todayJalali();
-    const latestDate = rows.reduce((latest, row) => row.work_date && row.work_date > latest ? row.work_date : latest, '');
-    const nextDate = latestDate ? nextJalaliDay(latestDate) : today;
-    const defaultDate = nextDate > today ? nextDate : today;
+    const selectedMonth = month.slice(0, 7);
+    const todayMonth = today.slice(0, 7);
+    const monthRows = rows.filter(row => row.work_date && row.work_date.slice(0, 7) === selectedMonth);
+    const latestDate = monthRows.reduce((latest, row) => row.work_date > latest ? row.work_date : latest, '');
+
+    let defaultDate;
+    if (!latestDate) {
+      defaultDate = selectedMonth === todayMonth ? today : `${selectedMonth}-01`;
+    } else {
+      const nextDate = nextJalaliDay(latestDate);
+      if (nextDate.slice(0, 7) !== selectedMonth) {
+        defaultDate = selectedMonth === todayMonth ? today : latestDate;
+      } else {
+        defaultDate = selectedMonth === todayMonth && today > nextDate ? today : nextDate;
+      }
+    }
     setRows(prev => [...prev, emptyRow(defaultDate)]);
   }
 
