@@ -118,3 +118,16 @@ html[data-theme="dark"] .profile-form input:not([type=file]),html[data-theme="da
 .date-year{width:68px}
 .date-select:focus{border-color:#818cf8;box-shadow:0 0 0 2px #4f46e51a}
 html[data-theme="dark"] .date-select{background:#151a28;color:#e7e9f3;border-color:#394158}
+
+
+/* موبایل: عنوان سایت هم‌ردیف پروفایل و محتوای صفحه بالاتر */
+@media(max-width:650px){
+  .topbar{padding-top:46px;margin-bottom:16px;position:relative;min-height:46px}
+  .topbar .brand{position:absolute;top:0;right:0;max-width:40%;min-width:0;gap:0}
+  .topbar .brand h1{font-size:16px;line-height:1.35;margin:0;white-space:nowrap}
+  .topbar .brand p{font-size:9px;line-height:1.4;margin:1px 0 0;white-space:nowrap}
+  .topbar .profile-trigger{left:0;right:auto;top:0;max-width:58%;padding:4px 6px;gap:5px}
+  .topbar .profile-trigger-avatar{width:30px;height:30px;flex-basis:30px;font-size:18px}
+  .topbar .profile-trigger-text strong,.topbar .profile-trigger-text small{max-width:105px;font-size:9px}
+  .topbar .profile-trigger-chevron{font-size:14px;margin-right:0}
+}
