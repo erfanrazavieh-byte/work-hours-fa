@@ -24,3 +24,20 @@
 .delete-panel-btn{background:#fff1f2;color:#be123c;border:1px solid #ffe4e6}
 .delete-panel-btn:hover{background:#ffe4e6}
 @media(max-width:650px){.panel-management-actions{width:100%;align-items:stretch}.panel-management-actions>button{flex:1}.rename-panel-form{width:100%}.rename-panel-form input{flex:1;width:100%;min-width:0}.rename-panel-form button{flex:1}}
+
+/* Collapsible panel management drawer */
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.panel-drawer-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(20,24,44,.42);display:flex;justify-content:flex-start;direction:rtl}
+.panel-drawer{width:min(440px,92vw);height:100%;overflow-y:auto;border-radius:0 18px 18px 0;padding:22px;background:#fff;box-shadow:12px 0 40px #10152c24;animation:panel-drawer-in .18s ease-out}
+.panel-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.panel-drawer-head h2{margin:0}
+.panel-drawer-close{font-size:17px;padding:7px 11px}
+.panel-drawer .panel-switcher{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:16px;padding:0;margin:0;border:0;box-shadow:none}
+.panel-drawer .panel-switcher-current{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0}
+.panel-drawer .panel-switcher-current select{width:100%}
+.panel-drawer .new-panel-form{width:100%;display:flex;flex-direction:column;align-items:stretch}
+.panel-drawer .new-panel-form input{width:100%;max-width:none}
+.panel-drawer .new-panel-form button{width:100%}
+@keyframes panel-drawer-in{from{transform:translateX(-18px);opacity:.75}to{transform:translateX(0);opacity:1}}
+@media(max-width:650px){.topbar{align-items:flex-start}.topbar-actions{gap:6px}.topbar-actions button{padding:9px 10px;font-size:12px}.panel-drawer{padding:18px}}
+@media(prefers-reduced-motion:reduce){.panel-drawer{animation:none}}
