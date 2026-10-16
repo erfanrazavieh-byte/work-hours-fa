@@ -141,14 +141,14 @@ export default function App() {
       const { data, error } = await supabase.from('work_panels').select('id, name').eq('user_id', session.user.id).order('created_at', { ascending: true });
       if (!active) return;
       if (error) {
-        setNotice(`خطا در دریافت پنل‌ها: ${error.message}`);
+        setNotice(`خطا در دریافت حساب‌های کاری: ${error.message}`);
         return;
       }
       const available = data || [];
       setPanels(available);
       if (available.length === 0) {
         setActivePanelId('');
-        setNotice('پنلی پیدا نشد. ابتدا migration چندپنلی را در Supabase اجرا کنید.');
+        setNotice('حساب کاری‌ای پیدا نشد. ابتدا migration چندحساب کاریی را در Supabase اجرا کنید.');
         return;
       }
       const savedId = window.localStorage.getItem(`work-panel-${session.user.id}`);
@@ -198,16 +198,16 @@ export default function App() {
   async function createPanel(e) {
     e.preventDefault();
     const name = newPanelName.trim();
-    if (!name) { setNotice('برای پنل جدید یک نام وارد کنید.'); return; }
+    if (!name) { setNotice('برای حساب کاری جدید یک نام وارد کنید.'); return; }
     if (!session || !supabase) return;
     setPanelBusy(true); setNotice('');
     const { data, error } = await supabase.from('work_panels').insert({ user_id: session.user.id, name }).select('id, name').single();
     setPanelBusy(false);
-    if (error) { setNotice(`پنل ساخته نشد: ${error.message}`); return; }
+    if (error) { setNotice(`ساخت حساب کاری ناموفق بود: ${error.message}`); return; }
     setPanels(prev => [...prev, data]);
     setNewPanelName('');
     setActivePanelId(data.id);
-    setNotice(`پنل «${data.name}» ساخته شد.`);
+    setNotice(`حساب کاری «${data.name}» ساخته شد.`);
   }
 
   function beginRenamePanel() {
@@ -221,7 +221,7 @@ export default function App() {
   async function renamePanel(e) {
     e.preventDefault();
     const name = panelNameDraft.trim();
-    if (!name) { setNotice('نام پنل نمی‌تواند خالی باشد.'); return; }
+    if (!name) { setNotice('نام حساب کاری نمی‌تواند خالی باشد.'); return; }
     if (!activePanelId || !session || !supabase) return;
     setPanelBusy(true); setNotice('');
     const { data, error } = await supabase.from('work_panels')
@@ -229,31 +229,31 @@ export default function App() {
       .eq('id', activePanelId).eq('user_id', session.user.id)
       .select('id, name').single();
     setPanelBusy(false);
-    if (error) { setNotice(`تغییر نام پنل انجام نشد: ${error.message}`); return; }
+    if (error) { setNotice(`تغییر نام حساب کاری انجام نشد: ${error.message}`); return; }
     setPanels(prev => prev.map(panel => panel.id === data.id ? data : panel));
     setEditingPanelName(false);
-    setNotice(`نام پنل به «${data.name}» تغییر کرد.`);
+    setNotice(`نام حساب کاری به «${data.name}» تغییر کرد.`);
   }
 
   async function deletePanel() {
     const current = panels.find(panel => panel.id === activePanelId);
     if (!current || !session || !supabase) return;
     if (panels.length <= 1) {
-      setNotice('نمی‌توانید آخرین پنل را حذف کنید؛ ابتدا یک پنل جدید بسازید.');
+      setNotice('نمی‌توانید آخرین حساب کاری را حذف کنید؛ ابتدا یک حساب کاری جدید بسازید.');
       return;
     }
-    const confirmed = window.confirm(`پنل «${current.name}» و تمام سوابق ساعت کاری و نرخ‌های ذخیره‌شده در آن برای همیشه حذف شوند؟ این کار قابل بازگشت نیست.`);
+    const confirmed = window.confirm(`حساب کاری «${current.name}» و تمام سوابق ساعت کاری و نرخ‌های ذخیره‌شده در آن برای همیشه حذف شوند؟ این کار قابل بازگشت نیست.`);
     if (!confirmed) return;
     setPanelBusy(true); setNotice('');
     const { error } = await supabase.from('work_panels').delete()
       .eq('id', activePanelId).eq('user_id', session.user.id);
     setPanelBusy(false);
-    if (error) { setNotice(`حذف پنل انجام نشد: ${error.message}`); return; }
+    if (error) { setNotice(`حذف حساب کاری انجام نشد: ${error.message}`); return; }
     const remaining = panels.filter(panel => panel.id !== activePanelId);
     setPanels(remaining);
     setActivePanelId(remaining[0].id);
     setEditingPanelName(false);
-    setNotice(`پنل «${current.name}» و اطلاعات مربوط به آن حذف شد.`);
+    setNotice(`حساب کاری «${current.name}» و اطلاعات مربوط به آن حذف شد.`);
   }
 
   async function saveRow(row) {
@@ -294,7 +294,7 @@ export default function App() {
   function getExportReport() {
     const activePanel = panels.find(panel => panel.id === activePanelId);
     return {
-      panelName: activePanel?.name || 'پنل محاسبات',
+      panelName: activePanel?.name || 'حساب کاری',
       monthName: monthTitle(month),
       totalHours: totalHoursLabel,
       totalPay: money(totalPay),
@@ -312,7 +312,7 @@ export default function App() {
     const report = getExportReport();
     const esc = value => String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
     const tableRows = report.rows.map(row => `<tr><td>${esc(row.date)}</td><td>${esc(row.start)}</td><td>${esc(row.end)}</td><td>${esc(row.notes)}</td><td>${esc(row.hours)}</td></tr>`).join('');
-    return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش کارکرد</title><style>body{font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:24px;color:#20243a}h1,h2,p{text-align:right}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #bbb;padding:8px;text-align:right}th{background:#eee}.totals{display:flex;gap:32px;margin-top:18px;font-weight:bold}</style></head><body><h1>گزارش کارکرد</h1><p>پنل: ${esc(report.panelName)} | ماه: ${esc(report.monthName)}</p><div class="totals"><span>مجموع ساعت: ${esc(report.totalHours)} ساعت</span><span>مبلغ قابل پرداخت: ${esc(report.totalPay)}</span></div><table><thead><tr><th>تاریخ</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th></tr></thead><tbody>${tableRows || '<tr><td colspan="5">داده‌ای برای نمایش وجود ندارد.</td></tr>'}</tbody></table></body></html>`;
+    return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش کارکرد</title><style>body{font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:24px;color:#20243a}h1,h2,p{text-align:right}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #bbb;padding:8px;text-align:right}th{background:#eee}.totals{display:flex;gap:32px;margin-top:18px;font-weight:bold}</style></head><body><h1>گزارش کارکرد</h1><p>حساب کاری: ${esc(report.panelName)} | ماه: ${esc(report.monthName)}</p><div class="totals"><span>مجموع ساعت: ${esc(report.totalHours)} ساعت</span><span>مبلغ قابل پرداخت: ${esc(report.totalPay)}</span></div><table><thead><tr><th>تاریخ</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th></tr></thead><tbody>${tableRows || '<tr><td colspan="5">داده‌ای برای نمایش وجود ندارد.</td></tr>'}</tbody></table></body></html>`;
   }
 
   function downloadBlob(blob, filename) {
@@ -368,7 +368,7 @@ export default function App() {
     ctx.font = 'bold 34px Tahoma, Arial';
     ctx.fillText('گزارش کارکرد', width - 50, 55);
     ctx.font = '24px Tahoma, Arial';
-    ctx.fillText(`پنل: ${report.panelName}  |  ماه: ${report.monthName}`, width - 50, 105);
+    ctx.fillText(`حساب کاری: ${report.panelName}  |  ماه: ${report.monthName}`, width - 50, 105);
     ctx.font = 'bold 24px Tahoma, Arial';
     ctx.fillText(`مجموع ساعت: ${report.totalHours} ساعت`, width - 50, 155);
     ctx.fillText(`مبلغ قابل پرداخت: ${report.totalPay}`, width - 50, 195);
@@ -421,13 +421,13 @@ export default function App() {
 
   if (!session) return <main className="auth-page"><form className="panel auth-card" onSubmit={submitAuth}><div className="brand-mark">س</div><h1>ثبت ساعت کاری</h1><p className="muted">سوابق کارکرد و دستمزد ماهانه</p><div className="tabs"><button type="button" className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>ورود</button><button type="button" className={authMode === 'signup' ? 'active' : ''} onClick={() => setAuthMode('signup')}>ثبت‌نام</button></div><label>ایمیل<input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" dir="ltr" /></label><label>رمز عبور<input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="حداقل ۶ کاراکتر" dir="ltr" /></label><button className="primary full" disabled={authBusy}>{authBusy ? 'در حال انجام…' : authMode === 'login' ? 'ورود به حساب' : 'ساخت حساب'}</button>{notice && <p className="notice">{notice}</p>}</form></main>;
 
-  return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><div className="topbar-actions"><button type="button" className="subtle panel-drawer-trigger" onClick={() => setPanelDrawerOpen(true)}>مدیریت پنل‌ها</button><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></div></header>
-    {panelDrawerOpen && <div className="panel-drawer-backdrop" onClick={() => setPanelDrawerOpen(false)}><aside className="panel-drawer panel" role="dialog" aria-modal="true" aria-labelledby="panel-drawer-title" onClick={e => e.stopPropagation()}><div className="panel-drawer-head"><h2 id="panel-drawer-title">انتخاب پنل محاسبات</h2><button type="button" className="subtle panel-drawer-close" aria-label="بستن" onClick={() => setPanelDrawerOpen(false)}>✕</button></div><div className="panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">پنل محاسبات</label><select id="active-panel" value={activePanelId} onChange={e => { setActivePanelId(e.target.value); setEditingPanelName(false); }} disabled={!panels.length || panelBusy}><option value="" disabled>انتخاب پنل</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select><div className="panel-management-actions">{editingPanelName ? <form className="rename-panel-form" onSubmit={renamePanel}><input value={panelNameDraft} onChange={e => setPanelNameDraft(e.target.value)} aria-label="نام جدید پنل" maxLength={80} autoFocus /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال ذخیره…' : 'ذخیره نام'}</button><button type="button" className="subtle" onClick={() => setEditingPanelName(false)} disabled={panelBusy}>لغو</button></form> : <><button type="button" className="subtle" onClick={beginRenamePanel} disabled={!activePanelId || panelBusy}>تغییر نام</button><button type="button" className="delete-panel-btn" onClick={deletePanel} disabled={!activePanelId || panelBusy || panels.length <= 1} title={panels.length <= 1 ? 'آخرین پنل قابل حذف نیست' : 'حذف پنل انتخاب‌شده'}>حذف پنل</button></>}</div></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام پنل جدید" aria-label="نام پنل جدید" maxLength={80} /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال انجام…' : '＋ افزودن پنل'}</button></form></div></aside></div>}
+  return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><div className="topbar-actions"><button type="button" className="subtle panel-drawer-trigger" onClick={() => setPanelDrawerOpen(true)}>حساب‌های کاری</button><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></div></header>
+    {panelDrawerOpen && <div className="panel-drawer-backdrop" onClick={() => setPanelDrawerOpen(false)}><aside className="panel-drawer panel" role="dialog" aria-modal="true" aria-labelledby="panel-drawer-title" onClick={e => e.stopPropagation()}><div className="panel-drawer-head"><h2 id="panel-drawer-title">مدیریت حساب‌های کاری</h2><button type="button" className="subtle panel-drawer-close" aria-label="بستن" onClick={() => setPanelDrawerOpen(false)}>✕</button></div><div className="panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">حساب کاری</label><select id="active-panel" value={activePanelId} onChange={e => { setActivePanelId(e.target.value); setEditingPanelName(false); }} disabled={!panels.length || panelBusy}><option value="" disabled>انتخاب حساب کاری</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select><div className="panel-management-actions">{editingPanelName ? <form className="rename-panel-form" onSubmit={renamePanel}><input value={panelNameDraft} onChange={e => setPanelNameDraft(e.target.value)} aria-label="نام جدید حساب کاری" maxLength={80} autoFocus /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال ذخیره…' : 'ذخیره نام'}</button><button type="button" className="subtle" onClick={() => setEditingPanelName(false)} disabled={panelBusy}>لغو</button></form> : <><button type="button" className="subtle" onClick={beginRenamePanel} disabled={!activePanelId || panelBusy}>تغییر نام</button><button type="button" className="delete-panel-btn" onClick={deletePanel} disabled={!activePanelId || panelBusy || panels.length <= 1} title={panels.length <= 1 ? 'آخرین حساب کاری قابل حذف نیست' : 'حذف حساب کاری انتخاب‌شده'}>حذف حساب کاری</button></>}</div></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام حساب کاری جدید" aria-label="نام حساب کاری جدید" maxLength={80} /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال انجام…' : '＋ افزودن حساب کاری'}</button></form></div></aside></div>}
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong style={{ fontFamily: 'inherit', fontSize: '1.5rem', fontWeight: 700 }}><span dir="ltr" style={{ fontSize: '1.5rem', fontFamily: 'inherit', fontWeight: 700, display: 'inline-block' }}>{totalHoursLabel}</span> ساعت</strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
       {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><DateSelect value={row.work_date} onChange={value => updateRow(row.id, 'work_date', value)} /></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
       <div className="table-footer"><button className="primary" onClick={addRow}>＋ افزودن روز کاری</button></div>
     </section>
     <div className="report-export-area" dir="ltr"><div className="report-export-menu-wrap"><button type="button" className="subtle report-export-trigger" onClick={() => setExportMenuOpen(open => !open)} aria-expanded={exportMenuOpen}>⇩ خروجی گرفتن از گزارش</button>{exportMenuOpen && <div className="report-export-menu" dir="rtl"><button type="button" onClick={exportImage}>ذخیره به‌صورت عکس (PNG)</button><button type="button" onClick={exportPdf}>ذخیره به‌صورت PDF</button><button type="button" onClick={exportSpreadsheet}>ذخیره به‌صورت Excel</button><button type="button" onClick={exportWord}>ذخیره به‌صورت Word</button></div>}</div></div>
-    <footer>اطلاعات هر حساب به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
+    <footer>اطلاعات هر حساب کاری به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
 }
