@@ -196,3 +196,26 @@ html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
   .rate-card-bottom .rate-input-wrap{width:68px;flex-basis:68px}
   .rate-card-bottom .rate-line button{width:68px}
 }
+
+
+/* یکسان‌سازی اندازه سه کنترل در ردیف پایین جدول بدون تغییر ترتیب آن‌ها */
+.table-footer>.primary,
+.rate-card-bottom .rate-input-wrap,
+.rate-card-bottom .rate-line button{width:96px;flex:0 0 96px;box-sizing:border-box}
+.table-footer>.primary,
+.rate-card-bottom .rate-line input,
+.rate-card-bottom .rate-line button{height:36px;min-height:36px;max-height:36px}
+.table-footer>.primary{padding:0 4px;font-size:11px;white-space:nowrap}
+.rate-card-bottom .rate-input-wrap{align-self:flex-start}
+.rate-card-bottom .rate-line input{width:100%;height:36px;min-height:36px;max-height:36px}
+.rate-card-bottom .rate-line button{padding:0 4px;font-size:11px}
+@media(max-width:650px){
+  .table-footer>.primary,
+  .rate-card-bottom .rate-input-wrap,
+  .rate-card-bottom .rate-line button{width:82px;flex-basis:82px}
+  .table-footer>.primary,
+  .rate-card-bottom .rate-line input,
+  .rate-card-bottom .rate-line button{height:34px;min-height:34px;max-height:34px}
+  .table-footer>.primary{padding:0 2px;font-size:9px}
+  .rate-card-bottom .rate-line button{padding:0 2px;font-size:10px}
+}
