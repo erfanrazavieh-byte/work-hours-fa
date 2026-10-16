@@ -240,3 +240,17 @@ html[data-theme="dark"] .table-wrap thead th{background:#252b3d;color:#b8bfd2}
   .table-wrap thead th:first-child{border-radius:0 7px 7px 0}
   .table-wrap thead th:last-child{border-radius:7px 0 0 7px}
 }
+
+
+/* تراز دقیق عنوان‌ها با مرکز هر ستون */
+.table-wrap table{table-layout:fixed}
+.table-wrap thead th{text-align:center!important;vertical-align:middle}
+.table-wrap tbody td{vertical-align:middle}
+.table-wrap tbody td:nth-child(1){width:18%}
+.table-wrap tbody td:nth-child(2),
+.table-wrap tbody td:nth-child(3){width:14%}
+.table-wrap tbody td:nth-child(4){width:22%}
+.table-wrap tbody td:nth-child(5){width:12%}
+.table-wrap tbody td:nth-child(6){width:20%}
+.table-wrap tbody td input,
+.table-wrap tbody td select{max-width:100%;margin-inline:auto}
