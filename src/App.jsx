@@ -88,6 +88,13 @@ export default function App() {
   const [editingPanelName, setEditingPanelName] = useState(false);
   const [panelNameDraft, setPanelNameDraft] = useState('');
   const [panelDrawerOpen, setPanelDrawerOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileBio, setProfileBio] = useState('');
+  const [profileAvatar, setProfileAvatar] = useState('');
+  const [profileAvatarFile, setProfileAvatarFile] = useState(null);
+  const [profileBusy, setProfileBusy] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [rate, setRate] = useState('');
   const [rateInput, setRateInput] = useState('');
@@ -98,6 +105,15 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem('karsanj-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const metadata = session?.user?.user_metadata || {};
+    setProfileName(metadata.full_name || '');
+    setProfilePhone(metadata.phone_number || '');
+    setProfileBio(metadata.bio || '');
+    setProfileAvatar(metadata.avatar_url || '');
+    setProfileAvatarFile(null);
+  }, [session?.user?.id, session?.user?.user_metadata?.full_name, session?.user?.user_metadata?.phone_number, session?.user?.user_metadata?.bio, session?.user?.user_metadata?.avatar_url]);
 
   const themeToggle = <button type="button" className="theme-toggle" onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'فعال‌کردن تم روشن' : 'فعال‌کردن تم تیره'} title={theme === 'dark' ? 'تم روشن' : 'تم تیره'}>{theme === 'dark' ? '☀' : '☾'}</button>;
 
@@ -179,6 +195,52 @@ export default function App() {
     if (result.error) setNotice(result.error.message);
     else if (authMode === 'signup' && !result.data.session) setNotice('ثبت‌نام انجام شد؛ تنظیم تأیید ایمیل در Supabase را بررسی کنید.');
     else setNotice(authMode === 'signup' ? 'حساب ساخته شد.' : 'وارد شدید.');
+  }
+
+  async function saveProfile(e) {
+    e.preventDefault();
+    if (!session?.user || !supabase) return;
+    setProfileBusy(true);
+    setNotice('');
+    let avatarUrl = profileAvatar;
+    try {
+      if (profileAvatarFile) {
+        const file = profileAvatarFile;
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+          setNotice('عکس پروفایل باید با فرمت JPG، PNG یا WebP باشد.');
+          setProfileBusy(false);
+          return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+          setNotice('حجم عکس پروفایل باید کمتر از ۲ مگابایت باشد.');
+          setProfileBusy(false);
+          return;
+        }
+        const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        const path = `${session.user.id}/avatar-${Date.now()}.${extension}`;
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+        avatarUrl = data.publicUrl;
+      }
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          full_name: profileName.trim(),
+          phone_number: profilePhone.trim(),
+          bio: profileBio.trim(),
+          avatar_url: avatarUrl
+        }
+      });
+      if (error) throw error;
+      setProfileAvatar(data.user?.user_metadata?.avatar_url || avatarUrl || '');
+      setProfileAvatarFile(null);
+      setProfileOpen(false);
+      setNotice('اطلاعات پروفایل ذخیره شد.');
+    } catch (error) {
+      setNotice(`ذخیره پروفایل انجام نشد: ${error.message || 'خطای نامشخص'}`);
+    } finally {
+      setProfileBusy(false);
+    }
   }
 
   function updateRow(id, key, value) { setRows(prev => prev.map(row => row.id === id ? { ...row, [key]: value } : row)); }
@@ -429,7 +491,8 @@ export default function App() {
 
   if (!session) return <main className="auth-page">{themeToggle}<form className="panel auth-card" onSubmit={submitAuth}><h1>کارسنج</h1><p className="muted">سوابق کارکرد و دستمزد ماهانه</p><div className="tabs"><button type="button" className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>ورود</button><button type="button" className={authMode === 'signup' ? 'active' : ''} onClick={() => setAuthMode('signup')}>ثبت‌نام</button></div><label>ایمیل<input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" dir="ltr" /></label><label>رمز عبور<input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="حداقل ۶ کاراکتر" dir="ltr" /></label><button className="primary full" disabled={authBusy}>{authBusy ? 'در حال انجام…' : authMode === 'login' ? 'ورود به حساب' : 'ساخت حساب'}</button>{notice && <p className="notice">{notice}</p>}</form></main>;
 
-  return <main className="app-shell"><header className="topbar"><div className="brand"><div><h1>کارسنج</h1><p>مدیریت کارکرد و دستمزد</p></div></div><div className="topbar-actions">{themeToggle}<span className="active-work-account" title="حساب کاری فعال">{panels.find(panel => panel.id === activePanelId)?.name || "حساب کاری انتخاب نشده"}</span><button type="button" className="subtle panel-drawer-trigger" onClick={() => setPanelDrawerOpen(true)} aria-haspopup="dialog" aria-expanded={panelDrawerOpen}><span className="panel-trigger-icon" aria-hidden="true">☷</span><span className="panel-trigger-label">حساب‌های کاری</span><span className="panel-trigger-hint">مدیریت و افزودن</span><span className="panel-trigger-chevron" aria-hidden="true">‹</span></button><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></div></header>
+  return <main className="app-shell"><header className="topbar"><button type="button" className="profile-trigger" onClick={() => setProfileOpen(true)} aria-haspopup="dialog" aria-expanded={profileOpen} title="پروفایل شخصی"><span className="profile-trigger-avatar">{session.user.user_metadata?.avatar_url ? <img src={session.user.user_metadata.avatar_url} alt="" /> : <span aria-hidden="true">♙</span>}</span><span className="profile-trigger-text"><strong>{session.user.user_metadata?.full_name || "پروفایل من"}</strong><small>{session.user.email}</small></span><span className="profile-trigger-chevron" aria-hidden="true">⌄</span></button><div className="brand"><div><h1>کارسنج</h1><p>مدیریت کارکرد و دستمزد</p></div></div><div className="topbar-actions">{themeToggle}<span className="active-work-account" title="حساب کاری فعال">{panels.find(panel => panel.id === activePanelId)?.name || "حساب کاری انتخاب نشده"}</span><button type="button" className="subtle panel-drawer-trigger" onClick={() => setPanelDrawerOpen(true)} aria-haspopup="dialog" aria-expanded={panelDrawerOpen}><span className="panel-trigger-icon" aria-hidden="true">☷</span><span className="panel-trigger-label">حساب‌های کاری</span><span className="panel-trigger-hint">مدیریت و افزودن</span><span className="panel-trigger-chevron" aria-hidden="true">‹</span></button><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></div></header>
+    {profileOpen && <div className="profile-backdrop" onClick={() => setProfileOpen(false)}><section className="profile-drawer panel" role="dialog" aria-modal="true" aria-labelledby="profile-title" onClick={e => e.stopPropagation()}><div className="profile-drawer-head"><div><h2 id="profile-title">پروفایل شخصی</h2><p className="muted">اطلاعات حساب کاربری خود را مدیریت کنید.</p></div><button type="button" className="subtle" aria-label="بستن پروفایل" onClick={() => setProfileOpen(false)}>✕</button></div><div className="profile-email-row"><span>ایمیل حساب</span><strong dir="ltr">{session.user.email}</strong></div><form className="profile-form" onSubmit={saveProfile}><div className="profile-avatar-editor"><div className="profile-avatar-preview">{profileAvatarFile ? <img src={URL.createObjectURL(profileAvatarFile)} alt="پیش‌نمایش عکس پروفایل" /> : profileAvatar ? <img src={profileAvatar} alt="عکس پروفایل" /> : <span aria-hidden="true">♙</span>}</div><label className="subtle profile-upload-label">انتخاب عکس پروفایل<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e => setProfileAvatarFile(e.target.files?.[0] || null)} /></label><small>JPG، PNG یا WebP؛ حداکثر ۲ مگابایت</small></div><label>نام نمایشی<input value={profileName} onChange={e => setProfileName(e.target.value)} maxLength={80} placeholder="نامی که در پروفایل نمایش داده می‌شود" /></label><label>شماره تماس<input type="tel" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} maxLength={30} placeholder="اختیاری" dir="ltr" /></label><label>درباره من<textarea value={profileBio} onChange={e => setProfileBio(e.target.value)} maxLength={300} rows={3} placeholder="چند کلمه درباره خودتان (اختیاری)" /></label><button className="primary full" disabled={profileBusy}>{profileBusy ? 'در حال ذخیره…' : 'ذخیره پروفایل'}</button>{notice && <p className="notice">{notice}</p>}</form></section></div>}
     {panelDrawerOpen && <div className="panel-drawer-backdrop" onClick={() => setPanelDrawerOpen(false)}><aside className="panel-drawer panel" role="dialog" aria-modal="true" aria-labelledby="panel-drawer-title" onClick={e => e.stopPropagation()}><div className="panel-drawer-head"><h2 id="panel-drawer-title">مدیریت حساب‌های کاری</h2><button type="button" className="subtle panel-drawer-close" aria-label="بستن" onClick={() => setPanelDrawerOpen(false)}>✕</button></div><div className="panel-switcher"><div className="panel-switcher-current"><label htmlFor="active-panel">حساب کاری</label><select id="active-panel" value={activePanelId} onChange={e => { const nextPanelId = e.target.value; setActivePanelId(nextPanelId); if (session?.user?.id) window.localStorage.setItem(`work-panel-${session.user.id}`, nextPanelId); setEditingPanelName(false); }} disabled={!panels.length || panelBusy}><option value="" disabled>انتخاب حساب کاری</option>{panels.map(panel => <option key={panel.id} value={panel.id}>{panel.name}</option>)}</select><div className="panel-management-actions">{editingPanelName ? <form className="rename-panel-form" onSubmit={renamePanel}><input value={panelNameDraft} onChange={e => setPanelNameDraft(e.target.value)} aria-label="نام جدید حساب کاری" maxLength={80} autoFocus /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال ذخیره…' : 'ذخیره نام'}</button><button type="button" className="subtle" onClick={() => setEditingPanelName(false)} disabled={panelBusy}>لغو</button></form> : <><button type="button" className="subtle" onClick={beginRenamePanel} disabled={!activePanelId || panelBusy}>تغییر نام</button><button type="button" className="delete-panel-btn" onClick={deletePanel} disabled={!activePanelId || panelBusy || panels.length <= 1} title={panels.length <= 1 ? 'آخرین حساب کاری قابل حذف نیست' : 'حذف حساب کاری انتخاب‌شده'}>حذف حساب کاری</button></>}</div></div><form className="new-panel-form" onSubmit={createPanel}><input value={newPanelName} onChange={e => setNewPanelName(e.target.value)} placeholder="نام حساب کاری جدید" aria-label="نام حساب کاری جدید" maxLength={80} /><button className="primary" disabled={panelBusy}>{panelBusy ? 'در حال انجام…' : '＋ افزودن حساب کاری'}</button></form></div></aside></div>}
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong style={{ fontFamily: 'inherit', fontSize: '1.5rem', fontWeight: 700 }}><span dir="ltr" style={{ fontSize: '1.5rem', fontFamily: 'inherit', fontWeight: 700, display: 'inline-block' }}>{totalHoursLabel}</span> ساعت</strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
