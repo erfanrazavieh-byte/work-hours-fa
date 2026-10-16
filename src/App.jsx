@@ -133,10 +133,9 @@ export default function App() {
       setLoading(true); setNotice(''); setRows([]);
       const { start, end } = jalaliMonthBounds(month);
       const monthStartIso = jalaliToIso(month);
-      const [entryResult, monthRateResult, profileResult] = await Promise.all([
+      const [entryResult, monthRateResult] = await Promise.all([
         supabase.from('work_entries').select('*').eq('panel_id', activePanelId).gte('work_date', start).lt('work_date', end).order('work_date', { ascending: true }),
-        supabase.from('monthly_rates').select('hourly_rate').eq('panel_id', activePanelId).eq('month_start', monthStartIso).maybeSingle(),
-        supabase.from('profiles').select('hourly_rate').eq('id', session.user.id).maybeSingle()
+        supabase.from('monthly_rates').select('hourly_rate').eq('panel_id', activePanelId).eq('month_start', monthStartIso).maybeSingle()
       ]);
       if (!active) return;
       if (entryResult.error) setNotice(`خطا در دریافت اطلاعات: ${entryResult.error.message}`);
@@ -144,9 +143,10 @@ export default function App() {
       if (monthRateResult.error) {
         setNotice(`خطا در دریافت نرخ ماهانه: ${monthRateResult.error.message}`);
       } else {
-        const currentRate = monthRateResult.data?.hourly_rate ?? profileResult.data?.hourly_rate ?? 0;
-        setRate(String(currentRate));
-        setRateInput(String(currentRate));
+        const currentRate = monthRateResult.data?.hourly_rate;
+        const rateValue = currentRate == null ? '' : String(currentRate);
+        setRate(rateValue);
+        setRateInput(rateValue);
       }
       setLoading(false);
     }
