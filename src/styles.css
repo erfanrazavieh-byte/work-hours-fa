@@ -186,3 +186,13 @@ html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
   .rate-card-bottom .rate-input-wrap{gap:2px}
   .rate-card-bottom .rate-compact-label{font-size:9px!important}
 }
+
+
+/* هم‌اندازه کردن کادر عدد نرخ با دکمه ذخیره */
+.rate-card-bottom .rate-input-wrap{width:78px;flex:0 0 78px}
+.rate-card-bottom .rate-line input{width:100%;max-width:none;min-width:0;flex:0 0 auto;min-height:34px;padding:8px 6px}
+.rate-card-bottom .rate-line button{width:78px;min-height:34px;padding:8px 6px;box-sizing:border-box}
+@media(max-width:650px){
+  .rate-card-bottom .rate-input-wrap{width:68px;flex-basis:68px}
+  .rate-card-bottom .rate-line button{width:68px}
+}
