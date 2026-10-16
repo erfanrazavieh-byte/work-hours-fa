@@ -2,7 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { todayJalali, jalaliToIso, isoToJalali, shiftJalaliMonth, monthTitle, jalaliMonthBounds } from './lib/jalali';
 
-const emptyRow = () => ({ id: `new-${crypto.randomUUID()}`, work_date: todayJalali(), start_time: '09:00', end_time: '17:00', notes: '' });
+function nextJalaliDay(value) {
+  const iso = jalaliToIso(value);
+  if (!iso) return todayJalali();
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return isoToJalali(date.toISOString().slice(0, 10));
+}
+const emptyRow = (workDate = todayJalali()) => ({ id: `new-${crypto.randomUUID()}`, work_date: workDate, start_time: '09:00', end_time: '17:00', notes: '' });
 const duration = row => {
   if (!row.start_time || !row.end_time) return 0;
   const [sh, sm] = row.start_time.split(':').map(Number), [eh, em] = row.end_time.split(':').map(Number);
@@ -77,7 +84,13 @@ export default function App() {
   }
 
   function updateRow(id, key, value) { setRows(prev => prev.map(row => row.id === id ? { ...row, [key]: value } : row)); }
-  function addRow() { setRows(prev => [...prev, emptyRow()]); }
+  function addRow() {
+    const today = todayJalali();
+    const latestDate = rows.reduce((latest, row) => row.work_date && row.work_date > latest ? row.work_date : latest, '');
+    const nextDate = latestDate ? nextJalaliDay(latestDate) : today;
+    const defaultDate = nextDate > today ? nextDate : today;
+    setRows(prev => [...prev, emptyRow(defaultDate)]);
+  }
 
   async function saveRow(row) {
     if (!session || !supabase) return;
