@@ -15,3 +15,12 @@
 .new-panel-form input{width:min(100%,320px)}
 .new-panel-form button{white-space:nowrap}
 @media(max-width:650px){.panel-switcher{align-items:stretch;flex-direction:column;padding:14px;gap:12px}.panel-switcher-current{align-items:stretch;flex-direction:column;gap:7px}.panel-switcher-current select{width:100%}.new-panel-form{width:100%}.new-panel-form input{flex:1;width:100%;min-width:0}.new-panel-form button{padding:10px;font-size:12px}}
+
+
+.panel-management-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.panel-management-actions button,.rename-panel-form button{padding:9px 12px;font-size:12px;white-space:nowrap}
+.rename-panel-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rename-panel-form input{width:180px;max-width:100%}
+.delete-panel-btn{background:#fff1f2;color:#be123c;border:1px solid #ffe4e6}
+.delete-panel-btn:hover{background:#ffe4e6}
+@media(max-width:650px){.panel-management-actions{width:100%;align-items:stretch}.panel-management-actions>button{flex:1}.rename-panel-form{width:100%}.rename-panel-form input{flex:1;width:100%;min-width:0}.rename-panel-form button{flex:1}}
