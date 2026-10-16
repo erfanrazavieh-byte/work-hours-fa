@@ -148,7 +148,7 @@ export default function App() {
       setPanels(available);
       if (available.length === 0) {
         setActivePanelId('');
-        setNotice('حساب کاری‌ای پیدا نشد. ابتدا migration چندحساب کاریی را در Supabase اجرا کنید.');
+        setNotice('هیچ حساب کاری‌ای پیدا نشد. ابتدا migration چندپنلی را در Supabase اجرا کنید.');
         return;
       }
       const savedId = window.localStorage.getItem(`work-panel-${session.user.id}`);
