@@ -259,3 +259,18 @@ html[data-theme="dark"] .table-wrap thead th{background:#252b3d;color:#b8bfd2}
 /* کوچک‌سازی دکمه خروجی گزارش */
 .report-export-trigger{padding:6px 10px;font-size:12px;font-weight:500;line-height:1.4;gap:5px;border-radius:8px}
 @media(max-width:650px){.report-export-trigger{padding:5px 8px;font-size:11px;gap:4px}}
+
+
+/* اصلاح چیدمان جدول در موبایل: جلوگیری از فشرده‌شدن و روی‌هم‌افتادن سلول‌ها */
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.table-wrap table{table-layout:auto;min-width:850px;width:100%;border-collapse:separate;border-spacing:0}
+.table-wrap thead th,.table-wrap tbody td{box-sizing:border-box}
+.table-wrap tbody td:nth-child(1),
+.table-wrap tbody td:nth-child(2),
+.table-wrap tbody td:nth-child(3),
+.table-wrap tbody td:nth-child(4),
+.table-wrap tbody td:nth-child(5),
+.table-wrap tbody td:nth-child(6){width:auto}
+.table-wrap tbody td{white-space:nowrap}
+.table-wrap tbody td:nth-child(4) input{min-width:120px;width:100%}
+.table-wrap tbody td .row-actions{min-width:max-content;flex-wrap:nowrap}
