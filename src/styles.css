@@ -274,3 +274,35 @@ html[data-theme="dark"] .table-wrap thead th{background:#252b3d;color:#b8bfd2}
 .table-wrap tbody td{white-space:nowrap}
 .table-wrap tbody td:nth-child(4) input{min-width:120px;width:100%}
 .table-wrap tbody td .row-actions{min-width:max-content;flex-wrap:nowrap}
+
+
+/* تفکیک واضح ستون‌های جدول با خطوط ظریف و رنگ متناوب ردیف‌ها */
+.table-wrap table{border-collapse:separate;border-spacing:0}
+.table-wrap thead th{
+  border-left:1px solid #d7dce8;
+  border-bottom:2px solid #c4ccdc;
+}
+.table-wrap thead th:last-child{border-left:0}
+.table-wrap tbody td{
+  border-left:1px solid #e0e4ed;
+  border-bottom:1px solid #e5e8f0;
+}
+.table-wrap tbody td:last-child{border-left:0}
+.table-wrap tbody tr:nth-child(even) td{background:#f6f8fc}
+.table-wrap tbody tr:nth-child(odd) td{background:#ffffff}
+.table-wrap tbody tr:hover td{background:#edf2fb}
+html[data-theme="dark"] .table-wrap thead th{
+  border-left-color:#3b4358;
+  border-bottom-color:#454f68;
+}
+html[data-theme="dark"] .table-wrap thead th:last-child{border-left:0}
+html[data-theme="dark"] .table-wrap tbody td{
+  border-left-color:#343b4e;
+  border-bottom-color:#343b4e;
+}
+html[data-theme="dark"] .table-wrap tbody tr:nth-child(even) td{background:#202638}
+html[data-theme="dark"] .table-wrap tbody tr:nth-child(odd) td{background:#1a2030}
+html[data-theme="dark"] .table-wrap tbody tr:hover td{background:#29334a}
+@media(max-width:650px){
+  .table-wrap thead th,.table-wrap tbody td{border-left-width:1px}
+}
