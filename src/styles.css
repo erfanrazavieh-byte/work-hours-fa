@@ -306,3 +306,9 @@ html[data-theme="dark"] .table-wrap tbody tr:hover td{background:#29334a}
 @media(max-width:650px){
   .table-wrap thead th,.table-wrap tbody td{border-left-width:1px}
 }
+
+
+/* بالا آوردن جدول پس از حذف عنوان گزارش کارکرد */
+.table-panel>.report-section-head{justify-content:flex-start;margin-bottom:8px;min-height:0}
+.table-panel>.report-section-head .month-switch{margin:0}
+@media(max-width:850px){.table-panel>.report-section-head{margin-bottom:6px}}
