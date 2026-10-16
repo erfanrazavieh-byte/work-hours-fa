@@ -48,3 +48,5 @@
 .report-export-menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:30;display:flex;flex-direction:column;min-width:210px;padding:6px;background:#fff;border:1px solid #e5e7ef;border-radius:12px;box-shadow:0 10px 30px #27325a18}
 .report-export-menu button{background:transparent;color:#303449;text-align:right;border-radius:8px;padding:10px 12px;white-space:nowrap}
 .report-export-menu button:hover{background:#f3f4fb;color:#4338ca}
+
+.active-work-account{display:inline-flex;align-items:center;max-width:220px;padding:9px 13px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff;color:#3730a3;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.active-work-account:before{content:"";width:7px;height:7px;flex:0 0 7px;margin-left:8px;border-radius:50%;background:#6366f1}@media(max-width:650px){.active-work-account{max-width:120px;padding:8px;font-size:11px}.active-work-account:before{margin-left:5px}}
