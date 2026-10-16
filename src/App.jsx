@@ -21,12 +21,17 @@ function TimeSelect({ value, onChange, label }) {
   </div>;
 }
 const emptyRow = (workDate = todayJalali()) => ({ id: `new-${crypto.randomUUID()}`, work_date: workDate, start_time: '09:00', end_time: '17:00', notes: '' });
-const duration = row => {
+const durationMinutes = row => {
   if (!row.start_time || !row.end_time) return 0;
   const [sh, sm] = row.start_time.split(':').map(Number), [eh, em] = row.end_time.split(':').map(Number);
   let mins = eh * 60 + em - (sh * 60 + sm);
   if (mins < 0) mins += 24 * 60;
-  return mins / 60;
+  return mins;
+};
+const duration = row => durationMinutes(row) / 60;
+const durationLabel = row => {
+  const mins = durationMinutes(row);
+  return `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`;
 };
 const faNum = n => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(n);
 const money = n => `${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(Math.round(n))} تومان`;
@@ -165,7 +170,7 @@ export default function App() {
   return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></header>
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong>{faNum(totalHours)} <small>ساعت</small></strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
-      {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><input className="date-input" value={row.work_date} onChange={e => updateRow(row.id, 'work_date', e.target.value)} placeholder="۱۴۰۵-۰۷-۲۴" dir="ltr" aria-label="تاریخ شمسی"/></td><td><TimeSelect value={row.start_time || '09:00'} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time || '17:00'} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell">{faNum(duration(row))}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
+      {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><input className="date-input" value={row.work_date} onChange={e => updateRow(row.id, 'work_date', e.target.value)} placeholder="۱۴۰۵-۰۷-۲۴" dir="ltr" aria-label="تاریخ شمسی"/></td><td><TimeSelect value={row.start_time || '09:00'} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time || '17:00'} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
       <div className="table-footer"><button className="primary" onClick={addRow}>＋ افزودن روز کاری</button><span>جمع ساعات: <b>{faNum(totalHours)}</b></span></div>
     </section><footer>اطلاعات هر حساب به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
 }
