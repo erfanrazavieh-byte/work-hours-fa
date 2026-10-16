@@ -254,3 +254,8 @@ html[data-theme="dark"] .table-wrap thead th{background:#252b3d;color:#b8bfd2}
 .table-wrap tbody td:nth-child(6){width:20%}
 .table-wrap tbody td input,
 .table-wrap tbody td select{max-width:100%;margin-inline:auto}
+
+
+/* کوچک‌سازی دکمه خروجی گزارش */
+.report-export-trigger{padding:6px 10px;font-size:12px;font-weight:500;line-height:1.4;gap:5px;border-radius:8px}
+@media(max-width:650px){.report-export-trigger{padding:5px 8px;font-size:11px;gap:4px}}
