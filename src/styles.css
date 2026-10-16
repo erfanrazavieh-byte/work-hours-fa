@@ -171,3 +171,18 @@ html[data-theme="dark"] .rate-card .rate-label-row span,html[data-theme="dark"] 
 .rate-card-bottom .rate-compact-label{display:block!important;flex:0 0 auto;margin:0!important;font-size:11px!important;white-space:nowrap;color:#7a8093}
 html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
 @media(max-width:650px){.rate-card-bottom .rate-compact-label{font-size:10px!important}}
+
+
+/* باکس نرخ در لبه چپ ردیف؛ عنوان زیر کادر عدد */
+.table-footer .rate-card-bottom{margin-right:auto;margin-left:0}
+.rate-card-bottom .rate-line{justify-content:flex-start;align-items:flex-start;gap:5px}
+.rate-card-bottom .rate-input-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex:0 0 auto}
+.rate-card-bottom .rate-compact-label{display:block!important;margin:0!important;font-size:10px!important;line-height:1.3;white-space:nowrap;color:#7a8093}
+.rate-card-bottom .rate-line button{align-self:flex-start}
+html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
+@media(max-width:650px){
+  .table-footer{flex-wrap:nowrap;align-items:center}
+  .table-footer .rate-card-bottom{margin-right:auto;margin-left:0}
+  .rate-card-bottom .rate-input-wrap{gap:2px}
+  .rate-card-bottom .rate-compact-label{font-size:9px!important}
+}
