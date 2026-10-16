@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase';
+import jalaali from 'jalaali-js';
 import { todayJalali, jalaliToIso, isoToJalali, shiftJalaliMonth, monthTitle, jalaliMonthBounds } from './lib/jalali';
 
 function nextJalaliDay(value) {
@@ -8,6 +9,31 @@ function nextJalaliDay(value) {
   const date = new Date(`${iso}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + 1);
   return isoToJalali(date.toISOString().slice(0, 10));
+}
+function DateSelect({ value, onChange, label = 'تاریخ شمسی' }) {
+  const [yearText = '', monthText = '', dayText = ''] = (value || '').split('-');
+  const year = Number(yearText) || Number(todayJalali().slice(0, 4));
+  const month = Number(monthText) || 1;
+  const day = Number(dayText) || 1;
+  const currentYear = Number(todayJalali().slice(0, 4));
+  const years = Array.from(new Set([...Array.from({ length: 13 }, (_, i) => currentYear - 10 + i), year])).sort((a, b) => a - b);
+  const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+  const daysInMonth = jalaali.jalaaliMonthLength(year, month);
+  const setDatePart = (nextYear, nextMonth, nextDay) => {
+    const safeDay = Math.min(nextDay, jalaali.jalaaliMonthLength(nextYear, nextMonth));
+    onChange(`${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`);
+  };
+  return <div className="date-picker" aria-label={label} dir="rtl">
+    <select className="date-select date-day" value={String(day)} aria-label="روز" onChange={e => setDatePart(year, month, Number(e.target.value))}>
+      {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(n => <option key={n} value={n}>{String(n).padStart(2, '0')}</option>)}
+    </select>
+    <select className="date-select date-month" value={String(month)} aria-label="ماه" onChange={e => setDatePart(year, Number(e.target.value), day)}>
+      {monthNames.map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
+    </select>
+    <select className="date-select date-year" value={String(year)} aria-label="سال" onChange={e => setDatePart(Number(e.target.value), month, day)}>
+      {years.map(y => <option key={y} value={y}>{y}</option>)}
+    </select>
+  </div>;
 }
 function TimeSelect({ value, onChange, label }) {
   const [hour = '', minute = ''] = value ? value.split(':').slice(0, 2) : ['', ''];
@@ -188,7 +214,7 @@ export default function App() {
   return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small">س</div><div><h1>ثبت ساعت کاری</h1><p>مدیریت کارکرد و دستمزد</p></div></div><button className="subtle" onClick={() => supabase.auth.signOut()}>خروج</button></header>
     <section className="summary-grid"><article className="panel summary"><span>ساعت کارکرد این ماه</span><strong><span dir="ltr">{totalHoursLabel}</span> <small>ساعت</small></strong></article><article className="panel summary"><span>مبلغ قابل پرداخت</span><strong>{money(totalPay)}</strong></article><article className="panel rate-card"><form onSubmit={saveRate}><label htmlFor="rate">نرخ هر ساعت (تومان)</label><div className="rate-line"><input id="rate" type="number" min="0" step="1000" value={rateInput} onChange={e => setRateInput(e.target.value)} required/><button className="primary">ذخیره نرخ</button></div><small>این نرخ فقط برای ماه انتخاب‌شده اعمال می‌شود.</small></form></article></section>
     <section className="panel table-panel"><div className="section-head"><div><h2>گزارش کارکرد</h2></div><div className="month-switch"><button aria-label="ماه قبل" onClick={() => setMonth(shiftJalaliMonth(month, -1))}>›</button><strong>{monthTitle(month)}</strong><button aria-label="ماه بعد" onClick={() => setMonth(shiftJalaliMonth(month, 1))}>‹</button></div></div>
-      {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><input className="date-input" value={row.work_date} onChange={e => updateRow(row.id, 'work_date', e.target.value)} placeholder="۱۴۰۵-۰۷-۲۴" dir="ltr" aria-label="تاریخ شمسی"/></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
+      {notice && <div className="notice notice-bar">{notice}</div>}{loading ? <div className="empty">در حال بارگذاری اطلاعات…</div> : <div className="table-wrap"><table><thead><tr><th>تاریخ شمسی</th><th>ساعت شروع</th><th>ساعت پایان</th><th>توضیحات</th><th>ساعت روز</th><th>عملیات</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><DateSelect value={row.work_date} onChange={value => updateRow(row.id, 'work_date', value)} /></td><td><TimeSelect value={row.start_time} onChange={value => updateRow(row.id, 'start_time', value)} label="ساعت شروع"/></td><td><TimeSelect value={row.end_time} onChange={value => updateRow(row.id, 'end_time', value)} label="ساعت پایان"/></td><td><input value={row.notes || ''} onChange={e => updateRow(row.id, 'notes', e.target.value)} placeholder="اختیاری"/></td><td className="hours-cell" dir="ltr">{durationLabel(row)}</td><td><div className="row-actions"><button className="save-btn" onClick={() => saveRow(row)}>ذخیره</button><button className="delete-btn" onClick={() => deleteRow(row)}>حذف</button></div></td></tr>)}</tbody></table>{rows.length === 0 && <div className="empty">برای این ماه هنوز ردیفی ثبت نشده است.</div>}</div>}
       <div className="table-footer"><button className="primary" onClick={addRow}>＋ افزودن روز کاری</button><span>جمع ساعات: <b>{faNum(totalHours)}</b></span></div>
     </section><footer>اطلاعات هر حساب به‌صورت جداگانه ذخیره می‌شود.</footer></main>;
 }
