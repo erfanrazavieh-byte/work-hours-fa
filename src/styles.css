@@ -58,3 +58,16 @@ html[data-theme="dark"]{color:#e7e9f3;background:#111522;color-scheme:dark}html[
 @media(max-width:650px){.topbar-actions .theme-toggle{width:36px;height:36px;min-width:36px}.theme-toggle-fixed{top:10px;left:10px}}
 
 .setup-page > .theme-toggle,.auth-page > .theme-toggle{position:fixed;top:14px;left:14px;z-index:1200}
+
+
+/* Clear affordance that this control opens the work-account drawer */
+.panel-drawer-trigger{display:inline-flex;align-items:center;gap:8px;position:relative;border:1px solid #c7d2fe!important;background:#f5f3ff!important;color:#4338ca!important;border-radius:12px!important;padding:8px 11px!important;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease,box-shadow .16s ease}
+.panel-drawer-trigger:hover{background:#ede9fe!important;border-color:#a5b4fc!important;box-shadow:0 3px 10px #4f46e51a;transform:translateY(-1px)}
+.panel-drawer-trigger:focus-visible{outline:3px solid #818cf8;outline-offset:2px}
+.panel-trigger-icon{font-size:18px;line-height:1}
+.panel-trigger-label{font-weight:700;white-space:nowrap}
+.panel-trigger-hint{font-size:10px;opacity:.8;white-space:nowrap;border-right:1px solid currentColor;padding-right:8px}
+.panel-trigger-chevron{font-size:19px;line-height:1;transform:rotate(-90deg);opacity:.8}
+html[data-theme="dark"] .panel-drawer-trigger{background:#292744!important;color:#ddd6fe!important;border-color:#49446e!important}
+html[data-theme="dark"] .panel-drawer-trigger:hover{background:#343052!important}
+@media(max-width:650px){.panel-drawer-trigger{gap:6px!important;padding:8px 9px!important}.panel-trigger-hint{display:none}.panel-trigger-icon{font-size:17px}}
