@@ -120,7 +120,8 @@ export default function App() {
     return () => { active = false; };
   }, [session, month]);
 
-  const totalMinutes = useMemo(() => rows.reduce((sum, row) => sum + durationMinutes(row), 0), [rows]);
+  // محاسبه از وضعیت فعلی فرم؛ ردیف‌های ذخیره‌نشده هم فوراً در جمع ماهانه لحاظ می‌شوند.
+  const totalMinutes = rows.reduce((sum, row) => sum + durationMinutes(row), 0);
   const totalHours = totalMinutes / 60;
   const totalHoursLabel = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
   const totalPay = totalHours * (Number(rate) || 0);
