@@ -39,7 +39,7 @@
 .panel-drawer .new-panel-form input{width:100%;max-width:none}
 .panel-drawer .new-panel-form button{width:100%}
 @keyframes panel-drawer-in{from{transform:translateX(-18px);opacity:.75}to{transform:translateX(0);opacity:1}}
-@media(max-width:650px){.topbar{align-items:flex-start}.topbar-actions{gap:6px}.topbar-actions button{padding:9px 10px;font-size:12px}.panel-drawer{padding:18px}}
+@media(max-width:650px){.topbar{align-items:flex-start;flex-wrap:wrap;gap:12px}.brand{min-width:0;max-width:100%}.brand h1{font-size:19px}.topbar-actions{width:100%;min-width:0;gap:6px;flex-wrap:wrap}.topbar-actions button{padding:9px 10px;font-size:12px;flex-shrink:0}.active-work-account{flex:1 1 0;min-width:0;max-width:none}.panel-drawer{padding:18px}}
 @media(prefers-reduced-motion:reduce){.panel-drawer{animation:none}}
 
 .report-export-area{display:flex;justify-content:flex-start;margin:14px 0 0;position:relative}
