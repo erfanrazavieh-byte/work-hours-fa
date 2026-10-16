@@ -312,3 +312,24 @@ html[data-theme="dark"] .table-wrap tbody tr:hover td{background:#29334a}
 .table-panel>.report-section-head{justify-content:flex-start;margin-bottom:8px;min-height:0}
 .table-panel>.report-section-head .month-switch{margin:0}
 @media(max-width:850px){.table-panel>.report-section-head{margin-bottom:6px}}
+
+
+/* نرخ ساعتی در بالای جدول، فشرده و هم‌ردیف با انتخاب ماه */
+.table-panel>.report-section-head{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.report-section-head .rate-card-top{width:auto;max-width:100%;padding:4px 7px;border:1px solid #e5e7ef;border-radius:10px;box-shadow:none;display:flex;align-items:center}
+.report-section-head .rate-card-top form{width:auto;margin:0}
+.report-section-head .rate-card-top .rate-line{gap:5px}
+.report-section-head .rate-card-top .rate-input-wrap{position:relative;min-width:0}
+.report-section-head .rate-card-top .rate-line input{width:145px;min-width:0;height:32px;padding:5px 7px;font-size:12px}
+.report-section-head .rate-card-top .rate-compact-label{display:none}
+.report-section-head .rate-card-top .rate-line button{height:32px;padding:4px 9px;font-size:11px}
+@media(max-width:650px){
+  .table-panel>.report-section-head{gap:6px}
+  .report-section-head .rate-card-top{padding:3px 4px}
+  .report-section-head .rate-card-top .rate-line{gap:4px}
+  .report-section-head .rate-card-top .rate-line input{width:105px;height:30px;padding:4px 5px;font-size:11px}
+  .report-section-head .rate-card-top .rate-line button{height:30px;padding:3px 6px;font-size:10px}
+  .report-section-head .month-switch{gap:4px;width:auto;align-self:auto}
+  .report-section-head .month-switch strong{min-width:75px;font-size:12px}
+  .report-section-head .month-switch button{padding:3px 7px;font-size:18px}
+}
