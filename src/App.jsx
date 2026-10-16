@@ -108,9 +108,9 @@ export default function App() {
     const isoDate = jalaliToIso(row.work_date);
     if (!isoDate) { setNotice('تاریخ شمسی معتبر وارد کنید؛ نمونه: ۱۴۰۵-۰۷-۲۴ (با اعداد انگلیسی).'); return; }
     if (!row.start_time || !row.end_time) { setNotice('ساعت شروع و پایان را وارد کنید.'); return; }
-    const validTime = value => /^([01]\\d|2[0-3]):[0-5]\\d$/.test(value);
+    const validTime = value => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
     if (!validTime(row.start_time) || !validTime(row.end_time)) {
-      setNotice('ساعت را با قالب ۲۴ ساعته وارد کنید؛ نمونه: 09:30 یا 17:45.');
+      setNotice('ساعت شروع یا پایان معتبر نیست.');
       return;
     }
     const payload = { user_id: session.user.id, work_date: isoDate, start_time: row.start_time, end_time: row.end_time, notes: row.notes || '' };
