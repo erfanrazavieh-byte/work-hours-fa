@@ -219,3 +219,24 @@ html[data-theme="dark"] .rate-card-bottom .rate-compact-label{color:#aab1c5}
   .table-footer>.primary{padding:0 2px;font-size:9px}
   .rate-card-bottom .rate-line button{padding:0 2px;font-size:10px}
 }
+
+
+/* سرستون‌های جدول: مینیمال، کم‌ارتفاع و با گوشه‌های گرد */
+.table-wrap thead th{
+  padding:8px 7px;
+  font-size:10px;
+  font-weight:500;
+  line-height:1.4;
+  background:#f0f2f8;
+  border-bottom:0;
+  white-space:nowrap;
+}
+.table-wrap thead th:first-child{border-radius:0 9px 9px 0}
+.table-wrap thead th:last-child{border-radius:9px 0 0 9px}
+html[data-theme="dark"] .table-wrap thead th{background:#252b3d;color:#b8bfd2}
+.table-wrap thead{border-radius:9px;overflow:hidden}
+@media(max-width:650px){
+  .table-wrap thead th{padding:7px 6px;font-size:9px}
+  .table-wrap thead th:first-child{border-radius:0 7px 7px 0}
+  .table-wrap thead th:last-child{border-radius:7px 0 0 7px}
+}
