@@ -5,6 +5,16 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create table if not exists public.monthly_rates (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  month_start date not null,
+  hourly_rate numeric(14,2) not null default 0 check (hourly_rate >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint monthly_rates_user_month_unique unique (user_id, month_start)
+);
 create table if not exists public.work_entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -17,6 +27,7 @@ create table if not exists public.work_entries (
 );
 create index if not exists work_entries_user_date_idx on public.work_entries(user_id, work_date);
 alter table public.profiles enable row level security;
+alter table public.monthly_rates enable row level security;
 alter table public.work_entries enable row level security;
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles for select using (auth.uid() = id);
@@ -24,6 +35,14 @@ drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles for insert with check (auth.uid() = id);
 drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+
+drop policy if exists "monthly_rates_select_own" on public.monthly_rates;
+create policy "monthly_rates_select_own" on public.monthly_rates for select using (auth.uid() = user_id);
+drop policy if exists "monthly_rates_insert_own" on public.monthly_rates;
+create policy "monthly_rates_insert_own" on public.monthly_rates for insert with check (auth.uid() = user_id);
+drop policy if exists "monthly_rates_update_own" on public.monthly_rates;
+create policy "monthly_rates_update_own" on public.monthly_rates for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 drop policy if exists "entries_select_own" on public.work_entries;
 create policy "entries_select_own" on public.work_entries for select using (auth.uid() = user_id);
 drop policy if exists "entries_insert_own" on public.work_entries;
@@ -37,3 +56,4 @@ begin insert into public.profiles (id, hourly_rate) values (new.id, 0) on confli
 $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+grant select, insert, update on table public.monthly_rates to authenticated;
